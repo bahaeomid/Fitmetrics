@@ -95,17 +95,7 @@ FitMetrics/
    
    This script will automatically install all required packages, verify installations, and provide helpful feedback. It includes progress tracking and error handling for smooth setup.
 
-2. **Install R packages:**
-   ```R
-   install.packages(c(
-     "shiny", "notionapi", "dplyr", "tidyr", "zoo", "purrr",
-     "lubridate", "stringr", "ggplot2", "gridExtra", "broom",
-     "DT", "plotly", "httr", "jsonlite", "commonmark", "markdown",
-     "pagedown", "rmarkdown", "glue", "htmltools"
-   ))
-   ```
-
-3. **Set up API keys:**
+2. **Set up API keys:**
    Create a `.Renviron` file in the project root:
    ```
    NOTION_TOKEN=your_notion_integration_token
