@@ -42,11 +42,21 @@ A comprehensive fitness analytics dashboard built with R Shiny that processes tr
 - **AI Integration**: OpenRouter API for language models
 - **Data Export**: pagedown, rmarkdown
 
+### 📦 Dependencies
+The application uses multiple R packages for functionality, including:
+- **Core**: shiny, dplyr, ggplot2, plotly, notionapi
+- **Data Processing**: tidyr, purrr, zoo, lubridate, stringr
+- **API/Integration**: httr, jsonlite, htmltools
+- **Reporting**: rmarkdown, pagedown, commonmark
+
+All dependencies are managed through the automated `install_dependencies.R` script.
+
 ## 📁 Project Structure
 
 ```
 FitMetrics/
 ├── app.R                    # Main Shiny application
+├── install_dependencies.R  # Automated dependency installation script
 ├── .Renviron               # Environment variables (API keys)
 ├── README.md              # This file
 ├── .gitignore             # Git ignore rules
@@ -55,7 +65,8 @@ FitMetrics/
 │   ├── notion_helpers.R   # Notion API utilities
 │   ├── core_processing.R # Data processing logic
 │   ├── ai_helpers.R      # AI integration utilities
-│   └── report.Rmd         # PDF report template
+│   ├── report.Rmd         # PDF report template
+│   └── report.css        # Report styling
 └── assets/               # Static assets (images, CSS)
 ```
 
@@ -66,14 +77,23 @@ FitMetrics/
 - RStudio (recommended)
 - Notion integration token
 - OpenRouter API key
+- Internet connection for package installation
 
-### Installation
+### Quick Start
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/FitMetrics.git
-   cd FitMetrics
+   git clone https://github.com/bahaeomid/Fitmetrics.git
+   cd Fitmetrics
    ```
+
+2. **Install dependencies:**
+   ```R
+   # Run the automated installation script (recommended)
+   source("install_dependencies.R")
+   ```
+   
+   This script will automatically install all required packages, verify installations, and provide helpful feedback. It includes progress tracking and error handling for smooth setup.
 
 2. **Install R packages:**
    ```R
