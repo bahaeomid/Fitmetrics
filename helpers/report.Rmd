@@ -1,0 +1,361 @@
+---
+title: "FitMetrics Report"
+output:
+  pagedown::html_paged:
+    css: "report.css"
+params:
+  identity: NULL
+  final: NULL
+  ai_history: NULL
+---
+<!-- This RMD file is used to define the HTML document structure and content being exported in app.R -->
+
+```{r setup, include=FALSE, warning = FALSE, message=FALSE}
+# LOAD REQUIRED LIBRARIES (install if missing)
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(htmltools)
+
+#define plot settings
+knitr::opts_chunk$set(
+  fig.retina = 2,
+  fig.width = 10,
+  fig.height = 4.75,
+  fig.align = "center",
+  fig.asp = NULL,
+  fig.keep = "high",
+  fig.lp = "fig:",
+  dpi = 120,
+  out.extra = 'style="max-width: 100%; height: auto; overflow: visible;"'
+)
+
+# Define Operator
+`%||%` <- function(a, b) if (!is.null(a)) a else b
+
+# Helper: format output in the AI chat box (replicated from app.R)
+format_ai_markdown <- function(md_text) {
+  
+  #initial check if the text exists in the chat box
+  if (is.null(md_text) || md_text == "")
+    return("")
+  
+  #split all lines individually 
+  lines <- unlist(strsplit(md_text, "\n", fixed = TRUE))
+  
+  # ====================================================
+  # Process non-table lines
+  # ====================================================
+  # Track previous line marker type and depth (to be used in normalize_line below)
+  prev_type <- NULL
+  prev_depth <- 0
+  
+  # Helper for treating multiple indentation levels
+  normalize_line <- function(line) {
+    # List items
+    if (grepl("^\\s*([-*]|\\d+\\.)\\s+", line)) {
+      # Start list item on new line
+      if (!is.null(prev_type)) line <- paste0("\n", line)
+      prev_type <<- "list"
+      line
+    } else {
+      # Non-list lines: ensure each ends with a newline for proper paragraph separation
+      prev_type <<- NULL
+      paste0(line, "\n")
+    }
+  }
+  
+  # ====================================================
+  # Detect table blocks and build an HTML table
+  # ====================================================
+  in_table <- FALSE
+  table_buffer <- character(0)
+  processed_lines <- character(0)
+  
+  #Helper to build table
+  flush_table <- function(buffer) {
+    if (length(buffer) < 2)
+      return("")
+    if (grepl("^\\|?\\s*-{3,}", buffer[2]))
+      buffer <- buffer[-2]
+    
+    # Build HTML rows
+    rows <- lapply(buffer, function(row) {
+      cells <- strsplit(gsub("^\\||\\|$", "", row), "\\|")[[1]]
+      cells <- trimws(cells)
+      cells_html <- sapply(cells, function(cell) {
+        html <- commonmark::markdown_html(cell)
+        gsub("^<p>|</p>\n?$", "", html)
+      })
+      paste0("<td>", cells_html, "</td>", collapse = "")
+    })
+    
+    row_html <- sapply(rows, function(r)
+      paste0("<tr>", r, "</tr>"))
+    
+    paste0(
+      "<div class='ai-md-table-wrapper'>",
+      "<table class='ai-md-table'>",
+      paste(row_html, collapse = ""),
+      "</table>",
+      "</div>"
+    )
+    
+  }
+  
+  # ====================================================
+  # process all lines (table and non-table)
+  # ====================================================
+  for (line in lines) {
+    if (grepl("^\\|", line)) {
+      table_buffer <- c(table_buffer, line)
+      in_table <- TRUE
+    } else {
+      
+      if (in_table) {
+        processed_lines <- c(
+          processed_lines,
+          flush_table(table_buffer),
+          "<br>"   # <-- force one blank line after table
+        )
+        
+        table_buffer <- character(0)
+        in_table <- FALSE
+      }
+      processed_lines <- c(processed_lines, normalize_line(line))
+    }
+  }
+  
+  # Flush table if file ends with a table
+  if (in_table)
+    processed_lines <- c(
+      processed_lines,
+      flush_table(table_buffer),
+      "<br>"   # <-- force one blank line after table
+    )
+  
+  # Rebuild text for final output
+  md_text <- paste(processed_lines, collapse = "\n")
+  md_text <- gsub("\\n{3,}", "\n\n", md_text, perl = TRUE)
+  
+  # Convert Markdown to HTML 
+  html <- commonmark::markdown_html(md_text)
+  htmltools::HTML(html)
+}
+
+```
+
+```{r report-header, results='asis', echo=FALSE, warning = FALSE, message=FALSE}
+#Header formatting
+header_div <- tags$div(
+  style = "margin-bottom: 1.5em; line-height: 1.2;",
+  
+  # Main title in the same blue as h1 in your CSS
+  tags$h1("🥇 FitMetrics Report", style = "margin-bottom:0.3em; font-weight: 700; font-size: 2em; color: #1B4F72;"),
+  
+  # Subtitle with bold labels, same shade of blue, small bottom border
+  tags$div(
+    HTML(
+      paste0(
+        "<b>Report Date:</b> ",
+        Sys.Date(),
+        " &nbsp; | &nbsp; ",
+        "<b>User Identity:</b> ",
+        params$identity %||% "N/A"
+      )
+    ),
+    style = paste(
+      "font-size: 0.9em;",
+      "color: #1B4F72;",
+      "border-bottom: 2px solid #D6EAF8;",
+      # same as h1 border
+      "padding-bottom: 4px;"
+    )
+  )
+)
+
+HTML(as.character(header_div))
+
+```
+
+# Overview
+
+```{r overview-cards, results='asis', echo=FALSE, warning = FALSE, message=FALSE}
+header_data <- c(
+  params$final$Stats$Profile$Header_Info,
+  params$final$Stats$Current_Week$Header_Info
+)
+
+for (col in names(header_data)) {
+  cat(as.character(tags$div(
+    class = "overview-card",
+    tags$div(class = "card-title", gsub("_", " ", col)),
+    tags$div(class = "card-value", header_data[[col]][1])
+  )))
+}
+```
+
+# Insights {.page-break}
+
+## Current Week
+
+```{r insights-current, results='asis', echo=FALSE, warning = FALSE, message=FALSE}
+insights_list <- params$final$Insights$Current_Week
+
+for (section_name in names(insights_list)) {
+  statements <- insights_list[[section_name]][insights_list[[section_name]] != ""]
+  div_content <- tags$div(
+    class = "insight-group",
+    tags$div(section_name, class = "subheading"),
+    lapply(statements, function(s) {
+      lines <- strsplit(s, "\\s*\\|\\s*")[[1]]
+      lapply(lines, function(line)
+        tags$p(line, class = "insight-line"))
+    })
+  )
+  cat(as.character(div_content))
+}
+```
+
+## Profile
+
+```{r insights-profile, results='asis', echo=FALSE, warning = FALSE, message=FALSE}
+insights_list <- params$final$Insights$Profile
+
+for (section_name in names(insights_list)) {
+  statements <- insights_list[[section_name]][insights_list[[section_name]] != ""]
+  div_content <- tags$div(
+    class = "insight-group",
+    tags$div(section_name, class = "subheading"),
+    lapply(statements, function(s) {
+      lines <- strsplit(s, "\\s*\\|\\s*")[[1]]
+      lapply(lines, function(line)
+        tags$p(line, class = "insight-line"))
+    })
+  )
+  cat(as.character(div_content))
+}
+```
+
+# Stats {.page-break}
+
+## Current Week
+
+```{r stats-current, results='asis', echo=FALSE, warning = FALSE, message=FALSE}
+stats <- params$final$Stats$Current_Week
+
+for (section in names(stats)) {
+  if (section != "Header_Info") {
+    df <- stats[[section]]
+    cat(as.character(tags$h3(section)))
+    for (col in names(df)) {
+      cat(as.character(tags$div(
+        class = "overview-card",
+        tags$div(class = "card-title", gsub("_", " ", col)),
+        tags$div(class = "card-value", df[[col]][1])
+      )))
+    }
+  }
+}
+```
+
+## Profile
+
+```{r stats-profile, results='asis', echo=FALSE, warning = FALSE, message=FALSE}
+stats <- params$final$Stats$Profile
+
+for (section in names(stats)) {
+  if (section != "Header_Info") {
+    df <- stats[[section]]
+    cat(as.character(tags$h3(section)))
+    for (col in names(df)) {
+      cat(as.character(tags$div(
+        class = "overview-card",
+        tags$div(class = "card-title", gsub("_", " ", col)),
+        tags$div(class = "card-value", df[[col]][1])
+      )))
+    }
+  }
+}
+```
+ 
+# Plots {.page-break}
+
+```{r plots, echo=FALSE, results='asis', warning = FALSE, message=FALSE}
+plots_list <- params$final$Plots$Profile
+plot_names <- names(plots_list)
+
+for (i in seq_along(plot_names)) {
+  pn <- plot_names[i]
+  p <- plots_list[[pn]]
+  
+  # Subset data to last 12 weeks
+  df_filtered <- p$data
+  last_12_weeks <- tail(sort(unique(df_filtered$Week_Start)), 12)
+  df_filtered <- df_filtered[df_filtered$Week_Start %in% last_12_weeks, ]
+  p$data <- df_filtered   # Replace the plot's data with the filtered data
+  p <- p + scale_x_date(limits = range(last_12_weeks))   # restrict x-axis scale
+  
+  # Store the original caption
+  plot_caption <- p$labels$caption
+  
+  # Nullify the original caption so it doesn't render
+  p$labels$caption <- NULL
+  
+  # Remove original caption and reduce bottom margin
+  p <- p +
+    theme(plot.margin = margin(t = 2, r = 2, b = 0, l = 2))  # small margin around plot
+
+  # Apply page-break only if NOT the first plot
+  div_class <- if (i == 1) "plot-container" else "plot-container page-break"
+  
+  # Plot title
+  cat(as.character(tags$div(class = div_class, tags$h3(pn))))
+  
+  # Render the plot
+  suppressWarnings(suppressMessages(print(p)))
+  
+  # Print custom caption div
+  if (!is.null(plot_caption)) {
+    
+    # Replace bullet points and line breaks for HTML
+    caption_html <- gsub("•", "&bull;", plot_caption)
+    caption_html <- gsub("\n", "<br>", caption_html)
+    
+    cat(as.character(tags$div(
+      class = "plot-note",
+      style = "color:#999999; font-style:italic; font-size:0.85em; margin-top:2px;",
+      HTML(caption_html)
+    )))
+  }
+}
+```
+
+
+# AI Coach {.page-break}
+
+```{r ai, echo=FALSE, results='asis', warning = FALSE, message=FALSE}
+conv <- params$ai_history
+
+if (length(conv) > 0) {
+  conv_div <- tags$div(style = "font-family: monospace; line-height: 1.4em; margin-bottom: 1em;", lapply(conv, function(msg) {
+    tagList(
+      # User prompt
+      tags$p(style = "color:#1B4F72; white-space: pre-wrap;", paste0("💬 You: ", msg$prompt)),
+      
+      # AI response, processed via format_ai_markdown
+      tags$div(class = "ai-message", HTML(
+        paste0("🧠 FitMetrics AI (", msg$model, "): ", format_ai_markdown(msg$response))
+      ))
+    )
+  }))
+  
+  HTML(as.character(conv_div))
+  
+} else {
+  HTML("<p><i>No AI conversation recorded.</i></p>")
+}
+
+```

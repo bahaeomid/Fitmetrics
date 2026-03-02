@@ -1,0 +1,176 @@
+# ────────────────────────────────────────────────
+# Git Ignore file for FitMetrics R Shiny Application
+# ────────────────────────────────────────────────
+
+# ────────────────────────────────
+# Sensitive Files & API Keys
+# ────────────────────────────────
+.Renviron
+.env
+*.key
+*.pem
+*.secret
+secrets.json
+token*
+api_key*
+credentials.json
+*.env*
+
+# ────────────────────────────────
+# R & RStudio Files
+# ────────────────────────────────
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+*.Rproj.user
+
+# ────────────────────────────────
+# OS Files
+# ────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ────────────────────────────────
+# R Package Cache
+# ────────────────────────────────
+.Rcache/
+packrat/lib/
+packrat/src/
+
+# ────────────────────────────────
+# R Build & Installation Files
+# ────────────────────────────────
+*.tar.gz
+*.zip
+*.rds
+*.rda
+
+# ────────────────────────────────
+# Temporary Files
+# ────────────────────────────────
+*.tmp
+*.temp
+*.log
+*.cache
+temp/
+tmp/
+cache/
+
+# ────────────────────────────────
+# Output Files
+# ────────────────────────────────
+*.pdf
+*.html
+*.docx
+*.xlsx
+*.csv
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+
+# ────────────────────────────────
+# Shiny App Temporary Files
+# ────────────────────────────────
+www/
+app_cache/
+session_data/
+
+# ────────────────────────────────
+# Notion Data & Cache
+# ────────────────────────────────
+notion_cache/
+notion_data/
+*.notion
+*.db
+
+# ────────────────────────────────
+# AI Model Cache
+# ────────────────────────────────
+ai_cache/
+model_cache/
+*.model
+*.h5
+*.pt
+
+# ────────────────────────────────
+# Development Files
+# ────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ────────────────────────────────
+# Include Core Application Files
+# ────────────────────────────────
+!app.R
+!helpers/
+!helpers/*.R
+!README.md
+!LICENSE
+!.gitignore
+
+# ────────────────────────────────
+# Backup Files
+# ────────────────────────────────
+*.bak
+*.backup
+backup/
+backups/
+
+# ────────────────────────────────
+# Data Files (if sensitive)
+# ────────────────────────────────
+data/raw/*.csv
+data/raw/*.xlsx
+data/raw/*.json
+data/processed/*.csv
+data/processed/*.rds
+
+# ────────────────────────────────
+# Configuration Files (if sensitive)
+# ────────────────────────────────
+config/
+settings/
+*.conf
+*.config
+*.ini
+
+# ────────────────────────────────
+# Test Data
+# ────────────────────────────────
+test_data/
+sample_data/
+mock_data/
+
+# ────────────────────────────────
+# Documentation Drafts
+# ────────────────────────────────
+docs/draft/
+*.md~
+*.markdown~
+
+# ────────────────────────────────
+# Archive Files
+# ────────────────────────────────
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# ────────────────────────────────
+# Docker Files (if present)
+# ────────────────────────────────
+Dockerfile
+docker-compose.yml
+.dockerignore
